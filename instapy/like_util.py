@@ -7,6 +7,7 @@ from selenium.webdriver.common.keys import Keys
 from .time_util import sleep
 from .util import format_number
 from .util import add_user_to_blacklist
+from .util import add_user_to_tracklist
 from .util import click_element
 from .util import is_private_profile
 from .util import update_activity
@@ -552,7 +553,7 @@ def check_link(browser, post_link, dont_like, mandatory_words, ignore_if_contain
 
 
 
-def like_image(browser, username, blacklist, logger, logfolder):
+def like_image(browser, username, blacklist, logger, logfolder, tag):
     """Likes the browser opened image"""
     # check action availability
     if quota_supervisor("likes") == "jump":
@@ -560,6 +561,7 @@ def like_image(browser, username, blacklist, logger, logfolder):
 
     like_xpath = "//button/span[@aria-label='Like']"
     unlike_xpath = "//button/span[@aria-label='Unlike']"
+
 
     # find first for like element
     like_elem = browser.find_elements_by_xpath(like_xpath)
@@ -575,10 +577,21 @@ def like_image(browser, username, blacklist, logger, logfolder):
             logger.info('--> Image Liked!')
             update_activity('likes')
 
+            # trying out testing the user like tracking here, in case no campaign was crated
+            if blacklist['enabled'] is False:
+                track_action = 'liked'
+                add_user_to_tracklist(
+                    username, "No Campaign", track_action, logger, logfolder,tag)
+
+
+
             if blacklist['enabled'] is True:
                 action = 'liked'
+                add_user_to_tracklist(
+                    username, blacklist['campaign'], action, logger, logfolder, tag)
                 add_user_to_blacklist(
                     username, blacklist['campaign'], action, logger, logfolder)
+
             sleep(2)
             return True, "success"
 
